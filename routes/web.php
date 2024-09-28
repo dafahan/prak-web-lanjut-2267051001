@@ -1,6 +1,8 @@
 <?php
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\KelasController;
+
 
 Route::get('/', function () {
     return view('welcome');
@@ -15,3 +17,6 @@ Route::get('profile/{npm}/edit', [ProfileController::class, 'edit'])->name('prof
 Route::post('profile/{npm}/update', [ProfileController::class, 'update'])->name('profile.update');
 Route::delete('profile/{npm}/delete', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
+
+
+Route::resource('kelas', KelasController::class);

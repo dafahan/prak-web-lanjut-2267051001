@@ -10,7 +10,7 @@
     <h1 class="text-3xl mb-6">Create Profile</h1>
 
     @if ($errors->any())
-        <div class="bg-red-500 text-white p-4 mb-4">
+        <div class="bg-red-500 text-white p-4 mb-4 rounded">
             <ul>
                 @foreach ($errors->all() as $error)
                     <li>{{ $error }}</li>
@@ -32,9 +32,17 @@
         </div>
 
         <div class="mb-4">
-            <label for="kelas" class="block text-sm font-bold mb-2">Kelas</label>
-            <input type="text" name="kelas" id="kelas" class="w-full p-2 border border-gray-300 rounded" value="{{ old('kelas') }}">
+            <label for="kelas_id" class="block text-sm font-bold mb-2">Kelas</label>
+            <select name="kelas_id" id="kelas_id" class="w-full p-2 border border-gray-300 rounded">
+                <option value="">Select a class</option>
+                @foreach ($kelas as $k)
+                    <option value="{{ $k->id }}" {{ old('kelas_id') == $k->id ? 'selected' : '' }}>
+                        {{ $k->nama_kelas }} <!-- assuming 'name' is the class name column -->
+                    </option>
+                @endforeach
+            </select>
         </div>
+
 
         <div class="mb-4">
             <label for="foto" class="block text-sm font-bold mb-2">Photo</label>

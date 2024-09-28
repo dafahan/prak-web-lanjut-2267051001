@@ -2,34 +2,25 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\UserModel;
+use App\Models\Kelas; 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class ProfileController extends Controller
 {
     // List all profiles (Read)
     public function index()
     {
-        // Path to CSV file
-        $csvFilePath = storage_path('app/public/users.csv');
-
-        // Read the CSV file
-        $profiles = [];
-        if (file_exists($csvFilePath)) {
-            $file = fopen($csvFilePath, 'r');
-            while (($data = fgetcsv($file)) !== FALSE) {
-                $profiles[] = $data;
-            }
-            fclose($file);
-        }
-
-        // Return the view with all profiles
+        $profiles = UserModel::with('kelas')->get(); 
         return view('profile.index', ['profiles' => $profiles]);
     }
 
     // Show the form to create a new profile (Create)
     public function create()
     {
-        return view('profile.create');
+        $kelas = Kelas::all(); // Fetch all Kelas records
+        return view('profile.create', ['kelas' => $kelas]);
     }
 
     // Store a new profile (Store)
@@ -37,91 +28,38 @@ class ProfileController extends Controller
     {
         $request->validate([
             'nama' => 'required|string|max:255',
-            'npm' => 'required|string|max:255',
-            'kelas' => 'required|string|max:255',
-            'foto' => 'required|image|max:2048'
+            'npm' => 'required|string|max:255|unique:user,npm', // Ensure unique npm in the user table
+            'kelas_id' => 'required|exists:kelas,id',
+            'foto' => 'nullable|image|max:2048'
         ]);
 
-        $csvFilePath = storage_path('app/public/users.csv');
+        $path = $request->file('foto') ? $request->file('foto')->store('public/photos') : null;
+        $filename = $path ? basename($path) : null;
 
-        // Check if the NPM already exists
-        if (file_exists($csvFilePath)) {
-            $file = fopen($csvFilePath, 'r');
-            while (($row = fgetcsv($file)) !== FALSE) {
-                if ($row[1] == $request->input('npm')) {
-                    fclose($file);
-                    return redirect()->back()->withErrors('NPM already exists.');
-                }
-            }
-            fclose($file);
-        }
-
-        // Store the uploaded photo
-        $path = $request->file('foto')->store('public/photos');
-        $filename = basename($path);
-
-        // Append the new data to CSV
-        $data = [
+        // Create the new profile
+        UserModel::create([
             'nama' => $request->input('nama'),
             'npm' => $request->input('npm'),
-            'kelas' => $request->input('kelas'),
+            'kelas_id' => $request->input('kelas_id'),
             'foto' => $filename
-        ];
+        ]);
 
-        // Open the CSV file and add the new profile
-        $file = fopen($csvFilePath, 'a');
-        fputcsv($file, $data);
-        fclose($file);
-
-        return redirect()->route('profile.index');
+        return redirect()->route('profile.index')->with('success', 'Profile created successfully.');
     }
 
-    // Show the profile (Read)
+    // Show a specific profile (Read)
     public function show($npm)
     {
-        // Find the profile by NPM in CSV
-        $csvFilePath = storage_path('app/public/users.csv');
-        $profile = null;
-        if (file_exists($csvFilePath)) {
-            $file = fopen($csvFilePath, 'r');
-            while (($row = fgetcsv($file)) !== FALSE) {
-                if ($row[1] == $npm) {
-                    $profile = $row;
-                    break;
-                }
-            }
-            fclose($file);
-        }
-
-        if (!$profile) {
-            return redirect()->route('profile.index')->withErrors('Profile not found.');
-        }
-
-        return view('profile.show', ['data' => $profile]);
+        $data = UserModel::where('npm', $npm)->first();
+        return view('profile.show', ['data' => $data]);
     }
 
     // Show the form to edit a profile (Edit)
     public function edit($npm)
     {
-        $csvFilePath = storage_path('app/public/users.csv');
-        $profile = null;
-
-        if (file_exists($csvFilePath)) {
-            $file = fopen($csvFilePath, 'r');
-            while (($row = fgetcsv($file)) !== FALSE) {
-                if ($row[1] == $npm) {
-                    $profile = $row;
-                    break;
-                }
-            }
-            fclose($file);
-        }
-
-        if (!$profile) {
-            return redirect()->route('profile.index')->withErrors('Profile not found.');
-        }
-
-        return view('profile.edit', ['data' => $profile]);
+        $data = UserModel::where('npm', $npm)->first();
+        $kelas = Kelas::all(); // Assuming you also need to fetch classes
+        return view('profile.edit', ['data' => $data, 'kelas' => $kelas]);
     }
 
     // Update an existing profile (Update)
@@ -129,86 +67,55 @@ class ProfileController extends Controller
     {
         $request->validate([
             'nama' => 'required|string|max:255',
-            'kelas' => 'required|string|max:255',
+            'npm' => [
+                'required',
+                'string',
+                'max:255',
+                // Ensure unique npm in the user table excluding the current profile
+                'unique:user,npm,' . $npm . ',npm' // Adjust this based on how your npm is identified in the database
+            ],
+            'kelas_id' => 'required|exists:kelas,id',
             'foto' => 'nullable|image|max:2048'
         ]);
 
-        $csvFilePath = storage_path('app/public/users.csv');
-        $updatedProfiles = [];
-        $profileUpdated = false;
+        $profile = UserModel::where('npm', $npm)->first();
 
-        if (file_exists($csvFilePath)) {
-            $file = fopen($csvFilePath, 'r');
-            while (($row = fgetcsv($file)) !== FALSE) {
-                if ($row[1] == $npm) {
-                    // Update the profile
-                    $row[0] = $request->input('nama');
-                    $row[2] = $request->input('kelas');
-
-                    if ($request->hasFile('foto')) {
-                        // Delete old photo if exists
-                        if (!empty($row[3])) {
-                            \Storage::delete('public/photos/' . $row[3]);
-                        }
-                        $path = $request->file('foto')->store('public/photos');
-                        $row[3] = basename($path);
-                    }
-
-                    $profileUpdated = true;
-                }
-                $updatedProfiles[] = $row;
-            }
-            fclose($file);
-        }
-
-        if (!$profileUpdated) {
+        if (!$profile) {
             return redirect()->route('profile.index')->withErrors('Profile not found.');
         }
 
-        // Save updated profiles back to the CSV
-        $file = fopen($csvFilePath, 'w');
-        foreach ($updatedProfiles as $profile) {
-            fputcsv($file, $profile);
-        }
-        fclose($file);
+        $profile->nama = $request->input('nama');
+        $profile->kelas_id = $request->input('kelas_id');
 
-        return redirect()->route('profile.index');
+        if ($request->hasFile('foto')) {
+            if ($profile->foto) {
+                Storage::delete('public/photos/' . $profile->foto);
+            }
+
+            $path = $request->file('foto')->store('public/photos');
+            $profile->foto = basename($path);
+        }
+
+        $profile->save();
+
+        return redirect()->route('profile.index')->with('success', 'Profile updated successfully.');
     }
 
     // Delete a profile (Delete)
     public function destroy($npm)
     {
-        $csvFilePath = storage_path('app/public/users.csv');
-        $updatedProfiles = [];
-        $profileDeleted = false;
+        $profile = UserModel::where('npm', $npm)->first();
 
-        if (file_exists($csvFilePath)) {
-            $file = fopen($csvFilePath, 'r');
-            while (($row = fgetcsv($file)) !== FALSE) {
-                if ($row[1] == $npm) {
-                    // Delete profile photo
-                    if (!empty($row[3])) {
-                        \Storage::delete('public/photos/' . $row[3]);
-                    }
-                    $profileDeleted = true;
-                    continue; // Skip this profile (delete)
-                }
-                $updatedProfiles[] = $row;
-            }
-            fclose($file);
-        }
-
-        if (!$profileDeleted) {
+        if (!$profile) {
             return redirect()->route('profile.index')->withErrors('Profile not found.');
         }
 
-        // Save remaining profiles back to the CSV
-        $file = fopen($csvFilePath, 'w');
-        foreach ($updatedProfiles as $profile) {
-            fputcsv($file, $profile);
+        if ($profile->foto) {
+            Storage::delete('public/photos/' . $profile->foto);
         }
-        fclose($file);
 
-        return redirect()->route('profile.index');
+        $profile->delete();
+
+        return redirect()->route('profile.index')->with('success', 'Profile deleted successfully.');
     }
 }
