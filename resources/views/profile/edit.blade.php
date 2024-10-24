@@ -19,27 +19,43 @@
         </div>
     @endif
 
-    <form action="{{ route('profile.update', $data->npm) }}" method="POST" enctype="multipart/form-data" class="bg-white p-6 rounded shadow-md">
+    <form action="{{ route('profile.update', $data->id) }}" method="POST" enctype="multipart/form-data" class="bg-white p-6 rounded shadow-md">
         @csrf
-        @method('PUT')
+        @method('POST')
+        
         <div class="mb-4">
             <label for="nama" class="block text-sm font-bold mb-2">Nama</label>
             <input type="text" name="nama" id="nama" class="w-full p-2 border border-gray-300 rounded" value="{{ old('nama', $data->nama) }}">
         </div>
 
         <div class="mb-4">
-            <label for="npm" class="block text-sm font-bold mb-2">NPM</label>
-            <input type="text" name="npm" id="npm" class="w-full p-2 border border-gray-300 rounded" value="{{ $data->npm }}" readonly>
-            <input type="hidden" name="npm" value="{{ $data->npm }}">
+            <label for="jurusan" class="block text-sm font-bold mb-2">Jurusan</label>
+            <input type="text" name="jurusan" id="jurusan" class="w-full p-2 border border-gray-300 rounded" value="{{ old('jurusan', $data->jurusan) }}">
         </div>
 
+        <div class="mb-4">
+            <label for="jurusan" class="block text-sm font-bold mb-2">Smester</label>
+            <input type="text" name="semester" id="jurusan" class="w-full p-2 border border-gray-300 rounded" value="{{ old('jurusan', $data->semester) }}">
+        </div>
         <div class="mb-4">
             <label for="kelas_id" class="block text-sm font-bold mb-2">Kelas</label>
             <select name="kelas_id" id="kelas_id" class="w-full p-2 border border-gray-300 rounded">
                 <option value="">Select a class</option>
                 @foreach ($kelas as $k)
                     <option value="{{ $k->id }}" {{ old('kelas_id', $data->kelas_id) == $k->id ? 'selected' : '' }}>
-                        {{ $k->nama_kelas }} <!-- assuming 'name' is the class name column -->
+                        {{ $k->nama_kelas }}
+                    </option>
+                @endforeach
+            </select>
+        </div>
+
+        <div class="mb-4">
+            <label for="fakultas_id" class="block text-sm font-bold mb-2">Fakultas</label>
+            <select name="fakultas_id" id="fakultas_id" class="w-full p-2 border border-gray-300 rounded">
+                <option value="">Select a faculty</option>
+                @foreach ($fakultas as $f)
+                    <option value="{{ $f->id }}" {{ old('fakultas_id', $data->fakultas_id) == $f->id ? 'selected' : '' }}>
+                        {{ $f->nama_fakultas }}
                     </option>
                 @endforeach
             </select>

@@ -13,9 +13,11 @@
         <thead>
             <tr>
                 <th class="py-2 px-4 border-b">Name</th>
-                <th class="py-2 px-4 border-b">NPM</th>
                 <th class="py-2 px-4 border-b">Kelas</th>
+                <th class="py-2 px-4 border-b">Jurusan</th> <!-- Added Jurusan -->
+                <th class="py-2 px-4 border-b">Semester</th> <!-- Added Semester -->
                 <th class="py-2 px-4 border-b">Photo</th>
+                <th class="py-2 px-4 border-b">Fakultas</th>
                 <th class="py-2 px-4 border-b">Actions</th>
             </tr>
         </thead>
@@ -23,15 +25,18 @@
             @foreach ($profiles as $profile)
                 <tr>
                     <td class="py-2 px-4 border-b text-center">{{ $profile->nama }}</td> <!-- Profile Name -->
-                    <td class="py-2 px-4 border-b text-center">{{ $profile->npm }}</td> <!-- NPM -->
                     <td class="py-2 px-4 border-b text-center">{{ $profile->kelas->nama_kelas }}</td> <!-- Class Name -->
+                    <td class="py-2 px-4 border-b text-center">{{ $profile->jurusan }}</td> <!-- Jurusan -->
+                    <td class="py-2 px-4 border-b text-center">{{ $profile->semester }}</td> <!-- Semester -->
                     <td class="py-2 px-4 border-b text-center">
                         <a href="{{ asset('storage/photos/'.$profile->foto) }}" class="text-sky-500 hover:italic">View Photo</a>
                     </td>
+                    <td class="py-2 px-4 border-b text-center">{{ $profile->fakultas->nama_fakultas }}</td> <!-- Semester -->
+
                     <td class="py-2 px-4 border-b text-center">
-                        <a href="{{ route('profile.show', $profile->npm) }}" class="bg-blue-500 text-white px-4 py-2 rounded">View</a>
-                        <a href="{{ route('profile.edit', $profile->npm) }}" class="bg-yellow-500 text-white px-4 py-2 rounded">Edit</a>
-                        <form action="{{ route('profile.destroy', $profile->npm) }}" method="POST" class="inline">
+                        <a href="{{ route('profile.show', $profile->id) }}" class="bg-blue-500 text-white px-4 py-2 rounded">View</a>
+                        <a href="{{ route('profile.edit', $profile->id) }}" class="bg-yellow-500 text-white px-4 py-2 rounded">Edit</a>
+                        <form action="{{ route('profile.destroy', $profile->id) }}" method="POST" class="inline">
                             @csrf
                             @method('DELETE')
                             <button type="submit" class="bg-red-500 text-white px-4 py-2 rounded">Delete</button>
@@ -40,7 +45,6 @@
                 </tr>
             @endforeach
         </tbody>
-
     </table>
 </body>
 </html>

@@ -10,17 +10,22 @@ return new class extends Migration
      * Run the migrations.
      */
     public function up(): void
+    
     {
+        if (!Schema::hasTable('user')) {
         Schema::table('user', function (Blueprint $table) {
             $table->string('foto')->nullable(); // Add a new column for the profile photo
         });
     }
+    }
     
     public function down(): void
     {
+        if (Schema::hasTable('user')) {
         Schema::table('user', function (Blueprint $table) {
             $table->dropColumn('foto'); // Rollback the added column
         });
+    }
     }
     
 };

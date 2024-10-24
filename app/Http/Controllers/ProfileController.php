@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\UserModel;
 use App\Models\Kelas; 
+use App\Models\Fakultas; 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -12,7 +13,7 @@ class ProfileController extends Controller
     // List all profiles (Read)
     public function index()
     {
-        $profiles = UserModel::with('kelas')->get(); 
+        $profiles = UserModel::with('kelas','fakultas')->get(); 
         return view('profile.index', ['profiles' => $profiles]);
     }
 
@@ -20,7 +21,8 @@ class ProfileController extends Controller
     public function create()
     {
         $kelas = Kelas::all(); // Fetch all Kelas records
-        return view('profile.create', ['kelas' => $kelas]);
+        $fakultas = Fakultas::all(); // Fetch all Fakultas records
+        return view('profile.create', ['kelas' => $kelas, 'fakultas' => $fakultas]);
     }
 
     // Store a new profile (Store)
@@ -28,8 +30,8 @@ class ProfileController extends Controller
     {
         $request->validate([
             'nama' => 'required|string|max:255',
-            'npm' => 'required|string|max:255|unique:user,npm', // Ensure unique npm in the user table
             'kelas_id' => 'required|exists:kelas,id',
+            'fakultas_id' => 'required|exists:fakultas,id', // Validate fakultas_id
             'foto' => 'nullable|image|max:2048'
         ]);
 
@@ -39,8 +41,10 @@ class ProfileController extends Controller
         // Create the new profile
         UserModel::create([
             'nama' => $request->input('nama'),
-            'npm' => $request->input('npm'),
+            'jurusan' => $request->input('jurusan'),
+            'semester'=> $request->input('semester'),
             'kelas_id' => $request->input('kelas_id'),
+            'fakultas_id' => $request->input('fakultas_id'), // Store fakultas_id
             'foto' => $filename
         ]);
 
@@ -48,44 +52,39 @@ class ProfileController extends Controller
     }
 
     // Show a specific profile (Read)
-    public function show($npm)
+    public function show($id)
     {
-        $data = UserModel::where('npm', $npm)->first();
+        $data = UserModel::findOrFail($id);
         return view('profile.show', ['data' => $data]);
     }
 
     // Show the form to edit a profile (Edit)
-    public function edit($npm)
+    public function edit($id)
     {
-        $data = UserModel::where('npm', $npm)->first();
+        $data = UserModel::findOrFail($id);
         $kelas = Kelas::all(); // Assuming you also need to fetch classes
-        return view('profile.edit', ['data' => $data, 'kelas' => $kelas]);
+        $fakultas = Fakultas::all(); // Fetch all Fakultas records
+
+        return view('profile.edit', ['data' => $data, 'kelas' => $kelas,"fakultas"=>$fakultas]);
     }
 
     // Update an existing profile (Update)
-    public function update(Request $request, $npm)
+    public function update(Request $request, $id)
     {
         $request->validate([
             'nama' => 'required|string|max:255',
-            'npm' => [
-                'required',
-                'string',
-                'max:255',
-                // Ensure unique npm in the user table excluding the current profile
-                'unique:user,npm,' . $npm . ',npm' // Adjust this based on how your npm is identified in the database
-            ],
             'kelas_id' => 'required|exists:kelas,id',
             'foto' => 'nullable|image|max:2048'
         ]);
 
-        $profile = UserModel::where('npm', $npm)->first();
-
-        if (!$profile) {
-            return redirect()->route('profile.index')->withErrors('Profile not found.');
-        }
+        $profile = UserModel::findOrFail($id);
 
         $profile->nama = $request->input('nama');
         $profile->kelas_id = $request->input('kelas_id');
+        
+        $profile->semester = $request->input('semester');
+        $profile->fakultas_id = $request->input('fakultas_id');
+
 
         if ($request->hasFile('foto')) {
             if ($profile->foto) {
@@ -102,13 +101,9 @@ class ProfileController extends Controller
     }
 
     // Delete a profile (Delete)
-    public function destroy($npm)
+    public function destroy($id)
     {
-        $profile = UserModel::where('npm', $npm)->first();
-
-        if (!$profile) {
-            return redirect()->route('profile.index')->withErrors('Profile not found.');
-        }
+        $profile = UserModel::findOrFail($id);
 
         if ($profile->foto) {
             Storage::delete('public/photos/' . $profile->foto);

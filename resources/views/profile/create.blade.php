@@ -27,8 +27,14 @@
         </div>
 
         <div class="mb-4">
-            <label for="npm" class="block text-sm font-bold mb-2">NPM</label>
-            <input type="text" name="npm" id="npm" class="w-full p-2 border border-gray-300 rounded" value="{{ old('npm') }}">
+            <label for="jurusan" class="block text-sm font-bold mb-2">Jurusan</label>
+            <input type="text" name="jurusan" id="npm" class="w-full p-2 border border-gray-300 rounded" value="{{ old('npm') }}">
+        </div>
+
+
+        <div class="mb-4">
+            <label for="jurusan" class="block text-sm font-bold mb-2">semester</label>
+            <input type="text" name="semester" id="npm" class="w-full p-2 border border-gray-300 rounded" value="{{ old('semester') }}">
         </div>
 
         <div class="mb-4">
@@ -37,12 +43,23 @@
                 <option value="">Select a class</option>
                 @foreach ($kelas as $k)
                     <option value="{{ $k->id }}" {{ old('kelas_id') == $k->id ? 'selected' : '' }}>
-                        {{ $k->nama_kelas }} <!-- assuming 'name' is the class name column -->
+                        {{ $k->nama_kelas }}
                     </option>
                 @endforeach
             </select>
         </div>
 
+        <div class="mb-4">
+            <label for="fakultas_id" class="block text-sm font-bold mb-2">Fakultas</label>
+            <select name="fakultas_id" id="fakultas_id" class="w-full p-2 border border-gray-300 rounded">
+                <option value="">Select a faculty</option>
+                @foreach ($fakultas as $f)
+                    <option value="{{ $f->id }}" {{ old('fakultas_id') == $f->id ? 'selected' : '' }}>
+                        {{ $f->nama_fakultas }} <!-- assuming 'nama_fakultas' is the faculty name column -->
+                    </option>
+                @endforeach
+            </select>
+        </div>
 
         <div class="mb-4">
             <label for="foto" class="block text-sm font-bold mb-2">Photo</label>
